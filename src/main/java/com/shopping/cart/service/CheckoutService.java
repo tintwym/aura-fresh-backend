@@ -94,8 +94,8 @@ public class CheckoutService implements ICheckoutService {
                 stripeLineItem = SessionCreateParams.LineItem.builder()
                         .setPriceData(
                                 SessionCreateParams.LineItem.PriceData.builder()
-                                        .setCurrency("sgd")
-                                        .setUnitAmount(toStripeCents(product.getPrice()))
+                                        .setCurrency("mmk")
+                                        .setUnitAmount(toStripeAmount(product.getPrice()))
                                         .setProductData(
                                                 SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                                         .setName(product.getName())
@@ -156,7 +156,8 @@ public class CheckoutService implements ICheckoutService {
         }
     }
 
-    private static long toStripeCents(BigDecimal amount) {
-        return amount.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).longValueExact();
+    /** MMK is a Stripe zero-decimal currency — amount is whole kyat, not cents. */
+    private static long toStripeAmount(BigDecimal amount) {
+        return amount.setScale(0, RoundingMode.HALF_UP).longValueExact();
     }
 }

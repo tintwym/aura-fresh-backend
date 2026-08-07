@@ -1,0 +1,43 @@
+spring.application.name=aura-fresh-backend
+
+# Server (Cloud Run sets PORT)
+server.port=${PORT:8080}
+
+# Database — Neon PostgreSQL
+# Copy .env.example to .env and set DATABASE_URL from Neon dashboard → Connect
+# DatabaseConfig parses DATABASE_URL when set; JDBC fallback below is optional
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shoppingcart}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:shoppingcart}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:shoppingcart}
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.open-in-view=false
+
+management.endpoints.web.exposure.include=health
+management.endpoint.health.show-details=when_authorized
+
+# JWT — JWT_SECRET in .env (min 32 characters)
+jwt.secret=${JWT_SECRET:replace-with-a-long-random-secret}
+jwt.expiration=${JWT_EXPIRATION:3600000}
+
+# Stripe
+stripe.api.key=${STRIPE_API_KEY:sk_test_placeholder}
+stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET:}
+
+# Aura Fresh frontend (Vite default port 3000)
+app.frontend.base-url=${APP_FRONTEND_BASE_URL:http://localhost:3000}
+
+# Optional custom Stripe return URLs (leave unset to use app.frontend.base-url)
+app.checkout.success-url=${APP_CHECKOUT_SUCCESS_URL:}
+app.checkout.cancel-url=${APP_CHECKOUT_CANCEL_URL:}
+
+# Cloudinary — product image uploads
+cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME:}
+cloudinary.api-key=${CLOUDINARY_API_KEY:}
+cloudinary.api-secret=${CLOUDINARY_API_SECRET:}
+cloudinary.folder=${CLOUDINARY_FOLDER:shopping-cart/products}
+
+# Run: export $(grep -v '^#' .env | xargs) && ./mvnw spring-boot:run
+# Docker: docker compose --env-file .env up --build

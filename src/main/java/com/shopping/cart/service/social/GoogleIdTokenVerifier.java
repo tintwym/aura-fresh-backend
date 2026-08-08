@@ -20,15 +20,13 @@ import java.util.stream.Collectors;
 
 @Service
 public class GoogleIdTokenVerifier {
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient;
     private final Set<String> acceptedAudiences;
 
     public GoogleIdTokenVerifier(
-            ObjectMapper objectMapper,
             @Value("${app.auth.google.client-id:}") String googleClientId,
             @Value("${app.auth.google.client-ids:}") String googleClientIds) {
-        this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
         this.acceptedAudiences = parseAudiences(googleClientId, googleClientIds);
     }

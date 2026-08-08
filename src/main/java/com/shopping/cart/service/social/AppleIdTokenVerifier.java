@@ -32,17 +32,15 @@ public class AppleIdTokenVerifier {
     private static final String APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient;
     private final Set<String> acceptedAudiences;
     private final Map<String, RSAPublicKey> keyCache = new ConcurrentHashMap<>();
     private volatile Instant keysFetchedAt = Instant.EPOCH;
 
     public AppleIdTokenVerifier(
-            ObjectMapper objectMapper,
             @Value("${app.auth.apple.client-id:}") String appleClientId,
             @Value("${app.auth.apple.client-ids:}") String appleClientIds) {
-        this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
         this.acceptedAudiences = parseAudiences(appleClientId, appleClientIds);
     }

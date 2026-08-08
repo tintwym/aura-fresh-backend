@@ -8,7 +8,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_users_provider_subject",
+                columnNames = {"provider", "provider_subject"}
+        )
+)
 public class User extends BaseEntity {
     private String firstName;
     private String lastName;
@@ -19,8 +25,18 @@ public class User extends BaseEntity {
     @Column(unique = true)
     private String email;
 
+    /** Null for social-only accounts (no local password). */
     @JsonIgnore
+    @Column(nullable = true)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private AuthProvider provider = AuthProvider.LOCAL;
+
+    /** Stable subject from the IdP (Google `sub`, Apple `sub`). */
+    @Column(name = "provider_subject")
+    private String providerSubject;
 
     /** Incremented on password change so existing JWTs are rejected. */
     @Column(nullable = false)
@@ -46,5 +62,13 @@ public class User extends BaseEntity {
         this.password = password;
         this.role = role;
         this.profile = profile;
+        this.provider = AuthProvider.LOCAL;
+    }
+
+    @PrePersist
+    void ensureAuthProvider() {
+        if (provider == null) {
+            provider = AuthProvider.LOCAL;
+        }
     }
 }

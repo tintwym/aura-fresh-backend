@@ -36,6 +36,7 @@ Admin Hub: http://127.0.0.1:3000/admin
    - `APP_FRONTEND_BASE_URL` = live shop origin (no trailing slash preferred)
    - Cloudinary keys
    - `ADMIN_SEED_*` for first admin
+   - Social (optional): `GOOGLE_CLIENT_ID`, `APPLE_CLIENT_ID` (iOS bundle / Services ID)
 2. Deploy image from `backend/Dockerfile` / `scripts/deploy-cloud-run.sh`
 3. Stripe Dashboard → webhook → `https://<api-host>/api/stripe/webhook`  
    Events: `checkout.session.completed`

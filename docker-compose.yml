@@ -34,6 +34,10 @@ services:
       CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-aura-fresh/products}
       ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_CLIENT_IDS: ${APPLE_CLIENT_IDS:-}
       PORT: "8080"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health"]

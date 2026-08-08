@@ -39,5 +39,11 @@ cloudinary.api-key=${CLOUDINARY_API_KEY:}
 cloudinary.api-secret=${CLOUDINARY_API_SECRET:}
 cloudinary.folder=${CLOUDINARY_FOLDER:shopping-cart/products}
 
+# Social sign-in (ID tokens)
+app.auth.google.client-id=${GOOGLE_CLIENT_ID:}
+app.auth.google.client-ids=${GOOGLE_CLIENT_IDS:}
+app.auth.apple.client-id=${APPLE_CLIENT_ID:}
+app.auth.apple.client-ids=${APPLE_CLIENT_IDS:}
+
 # Run: export $(grep -v '^#' .env | xargs) && ./mvnw spring-boot:run
 # Docker: docker compose --env-file .env up --build

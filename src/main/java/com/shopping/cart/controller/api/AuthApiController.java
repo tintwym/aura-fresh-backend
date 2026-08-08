@@ -3,8 +3,10 @@ package com.shopping.cart.controller.api;
 import com.shopping.cart.dto.request.LoginAdminRequest;
 import com.shopping.cart.dto.request.LoginUserRequest;
 import com.shopping.cart.dto.request.RegisterUserRequest;
+import com.shopping.cart.dto.request.SocialLoginRequest;
 import com.shopping.cart.dto.response.AuthResponse;
 import com.shopping.cart.service.UserService;
+import com.shopping.cart.service.social.SocialAuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthApiController {
     private final UserService userService;
+    private final SocialAuthService socialAuthService;
 
-    public AuthApiController(UserService userService) {
+    public AuthApiController(UserService userService, SocialAuthService socialAuthService) {
         this.userService = userService;
+        this.socialAuthService = socialAuthService;
     }
 
     @PostMapping("/users/register")
@@ -43,5 +47,10 @@ public class AuthApiController {
             return ResponseEntity.status(401).build();
         }
         return ResponseEntity.ok(authResponse);
+    }
+
+    @PostMapping("/social")
+    public ResponseEntity<AuthResponse> loginSocial(@Valid @RequestBody SocialLoginRequest request) {
+        return ResponseEntity.ok(socialAuthService.loginWithSocial(request));
     }
 }

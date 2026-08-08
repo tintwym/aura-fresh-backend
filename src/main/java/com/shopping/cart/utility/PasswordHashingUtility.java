@@ -12,6 +12,9 @@ public class PasswordHashingUtility {
 
     // Check that an unhashed password matches one that has been hashed
     public static boolean verifyPassword(String plainTextPassword, String hashedPassword) {
+        if (plainTextPassword == null || hashedPassword == null || hashedPassword.isBlank()) {
+            return false;
+        }
         return encoder.matches(plainTextPassword, hashedPassword);
     }
 }

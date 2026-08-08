@@ -8,6 +8,7 @@ import com.shopping.cart.dto.request.LoginUserRequest;
 import com.shopping.cart.dto.request.RegisterAdminRequest;
 import com.shopping.cart.dto.request.RegisterUserRequest;
 import com.shopping.cart.dto.response.AuthResponse;
+import com.shopping.cart.entity.AuthProvider;
 import com.shopping.cart.entity.Role;
 import com.shopping.cart.entity.User;
 import com.shopping.cart.interfaces.IUserService;
@@ -104,6 +105,8 @@ public class UserService implements IUserService {
         User user = UserMapper.fromRegisterUserRequest(registerUserRequest);
         Role role = roleRepository.findByName("User");
         user.setRole(role);
+        user.setProvider(AuthProvider.LOCAL);
+        user.setProviderSubject(null);
         userRepository.save(user);
 
         String token = jwtUtility.generateToken(user.getUsername(), user.getTokenVersion());
@@ -116,6 +119,8 @@ public class UserService implements IUserService {
         User user = UserMapper.fromRegisterAdminRequest(registerAdminRequest);
         Role role = roleRepository.findByName("Admin");
         user.setRole(role);
+        user.setProvider(AuthProvider.LOCAL);
+        user.setProviderSubject(null);
         userRepository.save(user);
         return true;
     }
@@ -124,7 +129,7 @@ public class UserService implements IUserService {
     public AuthResponse loginUser(LoginUserRequest loginUserRequest) {
         User user = userRepository.findByUsername(loginUserRequest.getUsername());
 
-        if (user == null || user.getRole() == null) {
+        if (user == null || user.getRole() == null || user.getPassword() == null) {
             return null;
         }
 
@@ -146,6 +151,7 @@ public class UserService implements IUserService {
         User user = userRepository.findByUsername(loginAdminRequest.getUsername());
         if (user == null
                 || user.getRole() == null
+                || user.getPassword() == null
                 || !"Admin".equalsIgnoreCase(user.getRole().getName())
                 || !PasswordHashingUtility.verifyPassword(loginAdminRequest.getPassword(), user.getPassword())) {
             return null;
@@ -164,6 +170,11 @@ public class UserService implements IUserService {
         }
 
         User user = requireUser(token);
+        if (user.getPassword() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "This account uses social sign-in and has no password to change");
+        }
         if (!PasswordHashingUtility.verifyPassword(request.getCurrentPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
         }

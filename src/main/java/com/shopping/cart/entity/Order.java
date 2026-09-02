@@ -28,6 +28,24 @@ public class Order extends BaseEntity {
     @Column(name = "stripe_checkout_session_id", unique = true)
     private String stripeCheckoutSessionId;
 
+    /** Snapshot of delivery address at checkout time. */
+    @Column(name = "delivery_address1")
+    private String deliveryAddress1;
+    @Column(name = "delivery_address2")
+    private String deliveryAddress2;
+    @Column(name = "delivery_unit")
+    private String deliveryUnit;
+    @Column(name = "delivery_floor")
+    private String deliveryFloor;
+    @Column(name = "delivery_city")
+    private String deliveryCity;
+    @Column(name = "delivery_state")
+    private String deliveryState;
+    @Column(name = "delivery_country")
+    private String deliveryCountry;
+    @Column(name = "delivery_zip_code")
+    private String deliveryZipCode;
+
     // Default constructor is required by JPA
     public Order() {}
 

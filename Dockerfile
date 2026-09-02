@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Build stage — must match java.version in pom.xml (21)
-FROM eclipse-temurin:21-jdk-jammy AS build
+# Build stage — must match java.version in pom.xml (25)
+FROM eclipse-temurin:25-jdk-jammy AS build
 WORKDIR /app
 
 COPY mvnw pom.xml ./
@@ -15,7 +15,7 @@ RUN ./mvnw -B -q -DskipTests package \
     && cp "$JAR" /app/app.jar
 
 # Runtime stage
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM eclipse-temurin:25-jre-jammy AS runtime
 WORKDIR /app
 
 RUN groupadd -r spring && useradd -r -g spring spring \

@@ -8,6 +8,8 @@ import com.shopping.cart.entity.User;
 import com.shopping.cart.interfaces.ICheckoutService;
 import com.shopping.cart.repository.CartRepository;
 import com.shopping.cart.repository.ProductRepository;
+import com.shopping.cart.repository.ProfileRepository;
+import com.shopping.cart.util.DeliveryAddressSupport;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
@@ -29,6 +31,7 @@ public class CheckoutService implements ICheckoutService {
 
     private final CartRepository cartRepository;
     private final ProductRepository productRepository;
+    private final ProfileRepository profileRepository;
     private final UserService userService;
     private final CheckoutFulfillmentService checkoutFulfillmentService;
 
@@ -47,10 +50,12 @@ public class CheckoutService implements ICheckoutService {
     public CheckoutService(
             CartRepository cartRepository,
             ProductRepository productRepository,
+            ProfileRepository profileRepository,
             UserService userService,
             CheckoutFulfillmentService checkoutFulfillmentService) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
+        this.profileRepository = profileRepository;
         this.userService = userService;
         this.checkoutFulfillmentService = checkoutFulfillmentService;
     }
@@ -64,6 +69,9 @@ public class CheckoutService implements ICheckoutService {
     @Transactional(readOnly = true)
     public CheckoutSessionResponse checkout(String token) {
         User user = userService.requireUser(token);
+
+        var profile = profileRepository.findByUserId(user.getId());
+        DeliveryAddressSupport.requireDeliverable(profile);
 
         Cart cart = cartRepository.findByUserWithItems(user);
         if (cart == null || cart.getCartItems().isEmpty()) {
@@ -126,16 +134,16 @@ public class CheckoutService implements ICheckoutService {
         }
 
         try {
-            SessionCreateParams params = SessionCreateParams.builder()
+            SessionCreateParams.Builder builder = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
                     .addAllLineItem(stripeLineItems)
                     .setClientReferenceId(user.getId().toString())
                     .putMetadata("user_id", user.getId().toString())
                     .setSuccessUrl(successUrl)
-                    .setCancelUrl(cancelUrl)
-                    .build();
+                    .setCancelUrl(cancelUrl);
+            DeliveryAddressSupport.toMetadata(profile).forEach(builder::putMetadata);
 
-            Session session = Session.create(params);
+            Session session = Session.create(builder.build());
             return new CheckoutSessionResponse(session.getId(), session.getUrl());
         } catch (StripeException e) {
             throw new RuntimeException("Failed to create Stripe session", e);

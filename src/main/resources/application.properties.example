@@ -26,8 +26,10 @@ jwt.expiration=${JWT_EXPIRATION:3600000}
 stripe.api.key=${STRIPE_API_KEY:sk_test_placeholder}
 stripe.webhook.secret=${STRIPE_WEBHOOK_SECRET:}
 
-# Aura Fresh frontend (Vite default port 3000)
+# Aura Fresh frontend (Vercel client shop)
 app.frontend.base-url=${APP_FRONTEND_BASE_URL:http://localhost:3000}
+# Aura Fresh admin (Vercel dashboard)
+app.admin.base-url=${APP_ADMIN_BASE_URL:http://localhost:3001}
 
 # Optional custom Stripe return URLs (leave unset to use app.frontend.base-url)
 app.checkout.success-url=${APP_CHECKOUT_SUCCESS_URL:}
@@ -46,4 +48,3 @@ app.auth.apple.client-id=${APPLE_CLIENT_ID:}
 app.auth.apple.client-ids=${APPLE_CLIENT_IDS:}
 
 # Run: export $(grep -v '^#' .env | xargs) && ./mvnw spring-boot:run
-# Docker: docker compose --env-file .env up --build

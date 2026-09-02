@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -19,6 +20,14 @@ public class Product extends BaseEntity {
     private String description;
     private BigDecimal price;
     private int stock;
+
+    /** Customer-facing grocery aisle (e.g. Meat, Dairy, Produce, Pantry). */
+    @Column(length = 64)
+    private String category;
+
+    /** Required for meat & dairy so customers can see freshness before purchase. */
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
 
     // Stripe product and price IDs (internal — not exposed on public product JSON)
     @com.fasterxml.jackson.annotation.JsonIgnore

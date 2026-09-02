@@ -15,6 +15,7 @@ public class CorsOrigins {
 
     public CorsOrigins(
             @Value("${app.frontend.base-url:}") String frontendBaseUrl,
+            @Value("${app.admin.base-url:}") String adminBaseUrl,
             Environment environment) {
         List<String> allowed = new ArrayList<>();
         boolean cloudRun = System.getenv("K_SERVICE") != null && !System.getenv("K_SERVICE").isBlank();
@@ -24,17 +25,25 @@ public class CorsOrigins {
         // Only allow localhost origins outside Cloud Run (or when explicitly in local/dev).
         if (!cloudRun || localProfile) {
             allowed.add("http://localhost:3000");
+            allowed.add("http://127.0.0.1:3000");
+            allowed.add("http://localhost:3001");
+            allowed.add("http://127.0.0.1:3001");
+            allowed.add("http://localhost");
         }
 
-        if (frontendBaseUrl != null && !frontendBaseUrl.isBlank()) {
-            String base = frontendBaseUrl.endsWith("/")
-                    ? frontendBaseUrl.substring(0, frontendBaseUrl.length() - 1)
-                    : frontendBaseUrl;
-            if (!allowed.contains(base)) {
-                allowed.add(base);
-            }
-        }
+        addOriginIfPresent(allowed, frontendBaseUrl);
+        addOriginIfPresent(allowed, adminBaseUrl);
         this.origins = List.copyOf(allowed);
+    }
+
+    private static void addOriginIfPresent(List<String> allowed, String url) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+        String base = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        if (!allowed.contains(base)) {
+            allowed.add(base);
+        }
     }
 
     public String[] asArray() {

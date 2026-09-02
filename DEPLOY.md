@@ -6,11 +6,12 @@ Use this after pushing this repo to GitHub. **Redeploy** when env vars change.
 
 | Path | Role |
 |------|------|
-| `LICENSE`, `README.md`, `DEPLOY.md` | Repo docs |
-| `Dockerfile`, `.dockerignore` | API Docker image |
-| `scripts/deploy-cloud-run.sh` | One-command deploy helper |
+| `backend/Dockerfile` | API Docker image for Cloud Run |
+| `backend/scripts/deploy-cloud-run.sh` | One-command deploy helper |
+| `frontend/` | Client shop → **Vercel** |
+| `admin/` | Admin dashboard → **Vercel** |
 
-The Aura Fresh frontend lives in `aura_fresh_frontend/` — set `APP_FRONTEND_BASE_URL` to your deployed frontend URL.
+Set `APP_FRONTEND_BASE_URL` and `APP_ADMIN_BASE_URL` to your Vercel deployment URLs.
 
 Database: **[Neon](https://neon.tech)** PostgreSQL (external — not hosted on Cloud Run).
 
@@ -51,7 +52,8 @@ Copy the service URL from the output (e.g. `https://shopping-cart-backend-860670
 | `JWT_SECRET` | `openssl rand -base64 32` |
 | `STRIPE_API_KEY` | `sk_test_…` or live key |
 | `STRIPE_WEBHOOK_SECRET` | From Stripe → Webhooks (`whsec_…`) |
-| `APP_FRONTEND_BASE_URL` | `https://your-app.vercel.app` |
+| `APP_FRONTEND_BASE_URL` | `https://your-client.vercel.app` |
+| `APP_ADMIN_BASE_URL` | `https://your-admin.vercel.app` |
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | API key |
 | `CLOUDINARY_API_SECRET` | API secret |
@@ -68,16 +70,19 @@ The deploy script auto-generates `.env.cloudrun` from `.env`. Format if you crea
 DATABASE_URL: postgresql://user:pass@host/db?sslmode=require
 JWT_SECRET: your-secret
 STRIPE_API_KEY: sk_test_xxx
-APP_FRONTEND_BASE_URL: https://your-app.vercel.app
+APP_FRONTEND_BASE_URL: https://your-client.vercel.app
+APP_ADMIN_BASE_URL: https://your-admin.vercel.app
 ```
 
-## Frontend (Aura Fresh)
+## Frontend & admin (Vercel)
 
-After deploy, point the frontend at this API:
+After the API is live:
 
-1. Set `API_BASE_URL` (or your frontend env equivalent) to the Cloud Run URL + `/api`
-2. Set `APP_FRONTEND_BASE_URL` on Cloud Run to your frontend origin
-3. Redeploy the frontend if needed
+1. **Client** (`frontend/`): set `VITE_API_BASE_URL=https://<api-host>/api`
+2. **Admin** (`admin/`): set `API_PROXY_TARGET=https://<api-host>`
+3. On Cloud Run: set `APP_FRONTEND_BASE_URL` and `APP_ADMIN_BASE_URL` to your Vercel URLs
+
+See root [README.md](../README.md).
 
 ## Stripe webhook
 
@@ -109,11 +114,11 @@ Expect JSON from `/api/products/index`, not HTML.
 
 | Symptom | Fix |
 |---------|-----|
-| CORS error | `APP_FRONTEND_BASE_URL` must match your Vercel URL |
+| CORS error | `APP_FRONTEND_BASE_URL` / `APP_ADMIN_BASE_URL` must match your Vercel URLs |
 | `DATABASE_URL is not set` on startup | Add `DATABASE_URL` in Cloud Run variables |
 | 403 on API URL | Deploy with `--allow-unauthenticated` |
 | Cold start slow | Normal on free tier after idle; retry after a few seconds |
-| Build fails | Run `docker build .` locally; ensure repo root has `Dockerfile` |
+| Build fails | Run `docker build .` from `backend/`; ensure `backend/Dockerfile` exists |
 | Container failed to start / PORT 8080 timeout | Usually **missing env vars** — check logs; ensure `DATABASE_URL` is set (see below) |
 | `PERMISSION_DENIED` / default service account missing IAM | See [Fix Cloud Build IAM](#fix-cloud-build-iam) below |
 

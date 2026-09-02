@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,6 +48,8 @@ public class ProductApiController {
             @RequestParam String description,
             @RequestParam BigDecimal price,
             @RequestParam int stock,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate expiryDate,
             @RequestParam(value = "images", required = false) MultipartFile[] images) {
         userService.requireAdmin(token);
         AddProductRequest request = new AddProductRequest();
@@ -54,6 +57,8 @@ public class ProductApiController {
         request.setDescription(description);
         request.setPrice(price);
         request.setStock(stock);
+        request.setCategory(category);
+        request.setExpiryDate(expiryDate);
         return productService.store(request, images != null ? images : new MultipartFile[0]);
     }
 
@@ -65,6 +70,8 @@ public class ProductApiController {
             @RequestParam String description,
             @RequestParam BigDecimal price,
             @RequestParam int stock,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate expiryDate,
             @RequestParam(value = "images", required = false) MultipartFile[] images) {
         userService.requireAdmin(token);
         UpdateProductRequest request = new UpdateProductRequest();
@@ -72,6 +79,8 @@ public class ProductApiController {
         request.setDescription(description);
         request.setPrice(price);
         request.setStock(stock);
+        request.setCategory(category);
+        request.setExpiryDate(expiryDate);
         return productService.update(id, request, images != null ? images : new MultipartFile[0]);
     }
 

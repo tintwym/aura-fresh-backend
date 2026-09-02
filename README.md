@@ -1,79 +1,27 @@
-# Aura Fresh backend
+# Backend API (`backend/`)
 
-Spring Boot **REST API** for Aura Fresh. Runs with **Docker** against **Neon PostgreSQL** (no local Postgres container).
+Spring Boot REST API for Aura Fresh (Neon Postgres, Stripe, Cloudinary).
 
-## Requirements
+**UIs:** `../frontend` (client), `../admin` (staff dashboard)
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose)
-- A [Neon](https://neon.tech) PostgreSQL database (free tier works)
-
-## Configuration
-
-1. Create a Neon project and copy the connection string from **Connect** (`postgresql://…?sslmode=require`).
-2. Copy the env template and fill in values:
+## Run locally
 
 ```bash
-cp .env.example .env
-# Edit .env — set DATABASE_URL to your Neon URL, plus JWT_SECRET and other keys
-```
-
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | Neon connection string (`postgresql://…?sslmode=require`) — **required** |
-| `JWT_SECRET` | JWT signing key (32+ chars) — **required** |
-| `STRIPE_API_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `APP_FRONTEND_BASE_URL` | Aura Fresh frontend origin (default `http://localhost:3000`) |
-| `CLOUDINARY_*` | Product image uploads |
-| `ADMIN_SEED_USERNAME` / `ADMIN_SEED_PASSWORD` | Optional first admin on startup |
-
-## Run with Docker + Neon
-
-```bash
-docker compose --env-file .env up --build
-```
-
-API base: **http://localhost:8080/api**  
-Health: **http://localhost:8080/actuator/health**
-
-Stop:
-
-```bash
-docker compose down
-```
-
-## Optional: Maven (local JVM)
-
-Use this only if you have Java 21 installed and prefer hot-reload:
-
-```bash
-export $(grep -v '^#' .env | xargs)
+cp .env.example .env   # DATABASE_URL, JWT_SECRET, …
 ./mvnw spring-boot:run
 ```
 
-## Google Cloud Run deploy
+→ http://localhost:8080/api
 
-```bash
-export GCP_PROJECT_ID=your-project-id
-./scripts/deploy-cloud-run.sh
-```
+## Config
 
-See **[DEPLOY.md](DEPLOY.md)** for env vars, IAM, and Stripe webhook setup.
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | Neon `postgresql://…?sslmode=require` |
+| `JWT_SECRET` | 32+ chars |
+| `APP_FRONTEND_BASE_URL` | Client origin (Stripe + CORS) |
+| `APP_ADMIN_BASE_URL` | Admin origin (CORS) |
+| `ADMIN_SEED_USERNAME` / `ADMIN_SEED_PASSWORD` | First admin account |
+| `STRIPE_*` / `CLOUDINARY_*` | Payments / images |
 
-## Tests
-
-```bash
-./mvnw test
-```
-
-Integration tests use **Testcontainers** with PostgreSQL 16.
-
-## Tech stack
-
-- Spring Boot 4.1 (Web, Data JPA, Actuator)
-- Docker + Neon PostgreSQL
-- JWT (jjwt), Stripe Java SDK, Cloudinary, Lombok
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+Production API: [DEPLOY.md](DEPLOY.md) (Cloud Run).

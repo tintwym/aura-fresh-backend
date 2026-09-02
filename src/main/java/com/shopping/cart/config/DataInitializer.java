@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -97,71 +98,100 @@ public class DataInitializer implements ApplicationRunner {
                 "Highly acclaimed, premium long-grain aromatic rice grown in the fertile lands of Shwe Bo. Fluffy, fragrant, and perfect for local meals.",
                 "18500.00",
                 45,
+                "Pantry",
+                null,
                 "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Fresh Shan State Organic Avocados",
                 "Creamy, rich avocados hand-picked from orchards in Kalaw, Shan State. Loaded with healthy fats and nutrients.",
                 "3800.00",
                 28,
+                "Produce",
+                4,
                 "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Halal Free-Range Whole Chicken",
                 "Fresh, premium-quality free-range chicken, processed and certified strictly under Halal guidelines. Perfect for traditional curries.",
                 "12500.00",
                 12,
+                "Meat",
+                3,
                 "https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Traditional Shan Yellow Tofu",
                 "Authentic yellow tofu handmade from chickpea flour, following deep-rooted Shan traditions. Rich in plant-based proteins, gluten-free, and vegan-friendly.",
                 "2500.00",
                 35,
+                "Produce",
+                5,
                 "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Gluten-Free Almond & Seed Bread",
                 "Freshly baked artisanal loaf made with premium almond flour, flaxseeds, and sunflower seeds. Fully gluten-free and low-carb.",
                 "6500.00",
                 8,
+                "Bakery",
+                2,
                 "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Premium Shan Hills Arabica Coffee Beans",
                 "Exquisite single-origin Arabica coffee beans grown under shade trees in the highlands of Pyin Oo Lwin. Rich aroma with notes of chocolate and citrus.",
                 "14000.00",
                 4,
+                "Pantry",
+                null,
                 "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Fresh Organic Baby Spinach",
                 "Tender baby spinach leaves cultivated using sustainable organic practices in local hydroponic farms. Pre-washed and ready to eat.",
                 "4500.00",
                 22,
+                "Produce",
+                3,
                 "https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Organic Farm-Fresh Grass-Fed Milk",
                 "Pasteurized whole milk sourced from local grass-fed dairy cows. Highly nutritious, antibiotic-free, with no added hormones.",
                 "5200.00",
                 18,
+                "Dairy",
+                5,
                 "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Natural Organic Coconut Water",
                 "Pure, refreshing coconut water sourced from organic coastal groves. An excellent natural source of electrolytes with no added sugars.",
                 "2900.00",
                 50,
+                "Beverages",
+                10,
                 "https://images.unsplash.com/photo-1543362906-acfc16c67564?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Premium Myanmar Raw Honey",
                 "100% pure raw wildflower honey sourced sustainably from wild hives in the rural forests of Myanmar. Unfiltered to preserve all active enzymes.",
                 "11500.00",
                 15,
+                "Pantry",
+                null,
                 "https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=600&q=80");
         seedGrocery(
                 "Organic Cashew & Almond Granola",
                 "Crunchy artisanal granola roasted with honey, coconut flakes, organic almonds, and cashews. Rich in fiber, but note it contains nuts.",
                 "8900.00",
                 3,
+                "Pantry",
+                null,
                 "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=600&q=80");
     }
 
     private void seedGrocery(
-            String name, String description, String price, int stock, String imageUrl) {
+            String name,
+            String description,
+            String price,
+            int stock,
+            String category,
+            Integer expiryInDays,
+            String imageUrl) {
+        LocalDate expiryDate = expiryInDays == null ? null : LocalDate.now().plusDays(expiryInDays);
         var existing = productRepository.findByNameIgnoreCase(name);
         if (existing.isPresent()) {
             Product product = existing.get();
@@ -169,11 +199,13 @@ public class DataInitializer implements ApplicationRunner {
             product.setDescription(description);
             product.setPrice(new BigDecimal(price));
             product.setStock(stock);
+            product.setCategory(category);
+            product.setExpiryDate(expiryDate);
             ensureImage(product, imageUrl);
             productRepository.save(product);
             return;
         }
-        saveProduct(name, description, price, stock, imageUrl);
+        saveProduct(name, description, price, stock, category, expiryDate, imageUrl);
     }
 
     private void ensureImage(Product product, String imageUrl) {
@@ -207,12 +239,21 @@ public class DataInitializer implements ApplicationRunner {
                 || lower.endsWith(".svg");
     }
 
-    private void saveProduct(String name, String description, String price, int stock, String imagePath) {
+    private void saveProduct(
+            String name,
+            String description,
+            String price,
+            int stock,
+            String category,
+            LocalDate expiryDate,
+            String imagePath) {
         Product product = new Product();
         product.setName(name);
         product.setDescription(description);
         product.setPrice(new BigDecimal(price));
         product.setStock(stock);
+        product.setCategory(category);
+        product.setExpiryDate(expiryDate);
 
         ProductImage image = new ProductImage(imagePath, name);
         image.setProduct(product);

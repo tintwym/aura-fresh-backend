@@ -70,6 +70,9 @@ public class ProductService implements IProductService {
         product.setDescription(addProductRequest.getDescription());
         product.setPrice(addProductRequest.getPrice());
         product.setStock(addProductRequest.getStock());
+        product.setCategory(normalizeCategory(addProductRequest.getCategory()));
+        product.setExpiryDate(addProductRequest.getExpiryDate());
+        validateFreshnessFields(product);
 
         List<ProductImage> productImages = new ArrayList<>();
         for (MultipartFile image : images) {
@@ -140,6 +143,47 @@ public class ProductService implements IProductService {
         return amount.setScale(0, RoundingMode.HALF_UP).longValueExact();
     }
 
+    private static String normalizeCategory(String category) {
+        if (category == null) {
+            return null;
+        }
+        String trimmed = category.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /** Meat and dairy must carry an expiry date for the customer app. */
+    private static void validateFreshnessFields(Product product) {
+        if (!requiresExpiry(product)) {
+            return;
+        }
+        if (product.getExpiryDate() == null) {
+            throw new IllegalArgumentException("Meat and dairy products require an expiry date");
+        }
+    }
+
+    private static boolean requiresExpiry(Product product) {
+        String category = product.getCategory() == null ? "" : product.getCategory().toLowerCase();
+        String haystack = (
+                (product.getName() == null ? "" : product.getName()) + " " +
+                (product.getDescription() == null ? "" : product.getDescription()) + " " +
+                category
+        ).toLowerCase();
+        return category.contains("meat")
+                || category.contains("dairy")
+                || haystack.contains("chicken")
+                || haystack.contains("beef")
+                || haystack.contains("pork")
+                || haystack.contains("mutton")
+                || haystack.contains("fish")
+                || haystack.contains("seafood")
+                || haystack.contains(" milk")
+                || haystack.startsWith("milk")
+                || haystack.contains("cheese")
+                || haystack.contains("yogurt")
+                || haystack.contains("butter")
+                || haystack.contains("cream");
+    }
+
     @Override
     @Transactional
     public Product update(UUID id, UpdateProductRequest updateProductRequest, MultipartFile[] newImages) {
@@ -156,6 +200,9 @@ public class ProductService implements IProductService {
         product.setDescription(updateProductRequest.getDescription());
         product.setPrice(newPrice);
         product.setStock(updateProductRequest.getStock());
+        product.setCategory(normalizeCategory(updateProductRequest.getCategory()));
+        product.setExpiryDate(updateProductRequest.getExpiryDate());
+        validateFreshnessFields(product);
 
         if (newImages != null && newImages.length > 0) {
             List<ProductImage> productImages = product.getImages();

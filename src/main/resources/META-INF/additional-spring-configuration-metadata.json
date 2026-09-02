@@ -3,7 +3,12 @@
     {
       "name": "app.frontend.base-url",
       "type": "java.lang.String",
-      "description": "Aura Fresh frontend URL for CORS and Stripe checkout redirects."
+      "description": "Aura Fresh client shop URL (Vercel) for CORS and Stripe checkout redirects."
+    },
+    {
+      "name": "app.admin.base-url",
+      "type": "java.lang.String",
+      "description": "Aura Fresh admin dashboard URL (Vercel) for CORS."
     },
     {
       "name": "app.checkout.success-url",

@@ -11,6 +11,8 @@ public class ProductMapper {
         product.setDescription(addProductRequest.getDescription());
         product.setPrice(addProductRequest.getPrice());
         product.setStock(addProductRequest.getStock());
+        product.setCategory(normalizeCategory(addProductRequest.getCategory()));
+        product.setExpiryDate(addProductRequest.getExpiryDate());
         return product;
     }
 
@@ -19,5 +21,15 @@ public class ProductMapper {
         product.setDescription(updateProductRequest.getDescription());
         product.setPrice(updateProductRequest.getPrice());
         product.setStock(updateProductRequest.getStock());
+        product.setCategory(normalizeCategory(updateProductRequest.getCategory()));
+        product.setExpiryDate(updateProductRequest.getExpiryDate());
+    }
+
+    private static String normalizeCategory(String category) {
+        if (category == null) {
+            return null;
+        }
+        String trimmed = category.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

@@ -2,6 +2,7 @@ package com.shopping.cart.service;
 
 import com.shopping.cart.entity.*;
 import com.shopping.cart.repository.*;
+import com.shopping.cart.util.DeliveryAddressSupport;
 import com.stripe.exception.StripeException;
 import com.stripe.model.LineItem;
 import com.stripe.model.Price;
@@ -183,6 +184,7 @@ public class CheckoutFulfillmentService {
             // Never fail fulfillment after payment: record shortage for ops instead of rolling back the charge.
             order.setStatus(stockShortage || catalogIssue ? "PAID_STOCK_SHORTAGE" : "COMPLETED");
             order.setStripeCheckoutSessionId(sessionId);
+            DeliveryAddressSupport.applyMetadataToOrder(order, session.getMetadata());
             order = orderRepository.save(order);
 
             for (Map.Entry<UUID, Integer> e : qtyByProduct.entrySet()) {

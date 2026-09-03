@@ -40,6 +40,14 @@ public class Product extends BaseEntity {
 
     private boolean isDeleted = false;
 
+    /** Populated for API responses — not a DB column. */
+    @Transient
+    private Double averageRating;
+
+    /** Populated for API responses — not a DB column. */
+    @Transient
+    private Long reviewCount;
+
     // One-to-Many relationship with ProductImage
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;

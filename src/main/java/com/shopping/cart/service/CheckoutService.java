@@ -10,6 +10,7 @@ import com.shopping.cart.repository.CartRepository;
 import com.shopping.cart.repository.ProductRepository;
 import com.shopping.cart.repository.ProfileRepository;
 import com.shopping.cart.util.DeliveryAddressSupport;
+import com.shopping.cart.util.DeliveryZones;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
@@ -67,7 +68,7 @@ public class CheckoutService implements ICheckoutService {
 
     @Override
     @Transactional(readOnly = true)
-    public CheckoutSessionResponse checkout(String token) {
+    public CheckoutSessionResponse checkout(String token, String deliveryZone) {
         User user = userService.requireUser(token);
 
         var profile = profileRepository.findByUserId(user.getId());
@@ -78,6 +79,7 @@ public class CheckoutService implements ICheckoutService {
             throw new IllegalStateException("Cart is empty. Cannot proceed with checkout.");
         }
 
+        BigDecimal grocerySubtotal = BigDecimal.ZERO;
         List<SessionCreateParams.LineItem> stripeLineItems = new ArrayList<>();
         for (CartItem cartItem : cart.getCartItems()) {
             UUID productId = Objects.requireNonNull(cartItem.getProduct().getId());
@@ -91,6 +93,9 @@ public class CheckoutService implements ICheckoutService {
                 throw new IllegalStateException("Insufficient stock for " + product.getName()
                         + " (requested " + cartItem.getQuantity() + ", available " + product.getStock() + ")");
             }
+
+            grocerySubtotal = grocerySubtotal.add(
+                    product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
 
             SessionCreateParams.LineItem stripeLineItem;
             if (product.getStripePriceId() != null && !product.getStripePriceId().isBlank()) {
@@ -118,6 +123,31 @@ public class CheckoutService implements ICheckoutService {
             stripeLineItems.add(stripeLineItem);
         }
 
+        String zone = DeliveryZones.normalize(
+                deliveryZone != null && !deliveryZone.isBlank()
+                        ? deliveryZone
+                        : profile.getCity());
+        BigDecimal deliveryFee = DeliveryZones.feeFor(zone, grocerySubtotal);
+        if (deliveryFee.signum() > 0) {
+            stripeLineItems.add(
+                    SessionCreateParams.LineItem.builder()
+                            .setPriceData(
+                                    SessionCreateParams.LineItem.PriceData.builder()
+                                            .setCurrency("mmk")
+                                            .setUnitAmount(toStripeAmount(deliveryFee))
+                                            .setProductData(
+                                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                            .setName("Delivery — " + zone)
+                                                            .putMetadata("kind", "delivery_fee")
+                                                            .putMetadata("delivery_zone", zone)
+                                                            .build()
+                                            )
+                                            .build()
+                            )
+                            .setQuantity(1L)
+                            .build());
+        }
+
         String successUrl;
         String cancelUrl;
         if (checkoutSuccessUrl != null && !checkoutSuccessUrl.isBlank()) {
@@ -139,6 +169,8 @@ public class CheckoutService implements ICheckoutService {
                     .addAllLineItem(stripeLineItems)
                     .setClientReferenceId(user.getId().toString())
                     .putMetadata("user_id", user.getId().toString())
+                    .putMetadata("delivery_zone", zone)
+                    .putMetadata("delivery_fee", deliveryFee.toPlainString())
                     .setSuccessUrl(successUrl)
                     .setCancelUrl(cancelUrl);
             DeliveryAddressSupport.toMetadata(profile).forEach(builder::putMetadata);

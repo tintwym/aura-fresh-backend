@@ -43,6 +43,7 @@ public class CheckoutFulfillmentService {
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public CheckoutFulfillmentService(
             PlatformTransactionManager transactionManager,
@@ -52,7 +53,8 @@ public class CheckoutFulfillmentService {
             PaymentRepository paymentRepository,
             ProductRepository productRepository,
             CartRepository cartRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            NotificationService notificationService) {
         this.transactionTemplate = new TransactionTemplate(Objects.requireNonNull(transactionManager));
         this.entityManager = entityManager;
         this.orderRepository = orderRepository;
@@ -61,6 +63,7 @@ public class CheckoutFulfillmentService {
         this.productRepository = productRepository;
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public Session retrievePaidSession(String sessionId) throws StripeException {
@@ -130,6 +133,9 @@ public class CheckoutFulfillmentService {
             Map<UUID, BigDecimal> lineTotalByProduct = new LinkedHashMap<>();
             boolean catalogIssue = false;
             for (LineItem lineItem : session.getLineItems().getData()) {
+                if (isDeliveryFeeLine(lineItem)) {
+                    continue;
+                }
                 Product product = resolveProduct(lineItem);
                 if (product.isDeleted()) {
                     // Already paid — do not abort fulfillment; flag for ops like stock shortage.
@@ -185,7 +191,22 @@ public class CheckoutFulfillmentService {
             order.setStatus(stockShortage || catalogIssue ? "PAID_STOCK_SHORTAGE" : "COMPLETED");
             order.setStripeCheckoutSessionId(sessionId);
             DeliveryAddressSupport.applyMetadataToOrder(order, session.getMetadata());
+            if (session.getMetadata() != null) {
+                String zone = session.getMetadata().get("delivery_zone");
+                String feeRaw = session.getMetadata().get("delivery_fee");
+                if (zone != null && !zone.isBlank()) {
+                    order.setDeliveryZone(zone);
+                }
+                if (feeRaw != null && !feeRaw.isBlank()) {
+                    try {
+                        order.setDeliveryFee(new BigDecimal(feeRaw));
+                    } catch (NumberFormatException ignored) {
+                        /* leave null */
+                    }
+                }
+            }
             order = orderRepository.save(order);
+            notificationService.notifyOrderStatus(order, null, order.getStatus());
 
             for (Map.Entry<UUID, Integer> e : qtyByProduct.entrySet()) {
                 Product fresh = productRepository.findById(Objects.requireNonNull(e.getKey())).orElseThrow();
@@ -274,5 +295,18 @@ public class CheckoutFulfillmentService {
             }
         }
         throw new IllegalStateException("Could not map Stripe line item to catalog product");
+    }
+
+    private static boolean isDeliveryFeeLine(LineItem lineItem) {
+        Price price = lineItem.getPrice();
+        if (price == null) {
+            return false;
+        }
+        com.stripe.model.Product stripeProduct = price.getProductObject();
+        if (stripeProduct != null && stripeProduct.getMetadata() != null) {
+            return "delivery_fee".equals(stripeProduct.getMetadata().get("kind"));
+        }
+        String name = lineItem.getDescription();
+        return name != null && name.toLowerCase().startsWith("delivery");
     }
 }

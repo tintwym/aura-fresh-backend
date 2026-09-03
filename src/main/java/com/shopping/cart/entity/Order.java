@@ -46,6 +46,12 @@ public class Order extends BaseEntity {
     @Column(name = "delivery_zip_code")
     private String deliveryZipCode;
 
+    @Column(name = "delivery_zone", length = 64)
+    private String deliveryZone;
+
+    @Column(name = "delivery_fee")
+    private BigDecimal deliveryFee;
+
     // Default constructor is required by JPA
     public Order() {}
 

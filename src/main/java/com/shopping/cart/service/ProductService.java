@@ -6,6 +6,7 @@ import com.shopping.cart.entity.ProductImage;
 import com.shopping.cart.entity.Product;
 import com.shopping.cart.interfaces.IProductService;
 import com.shopping.cart.repository.ProductRepository;
+import com.shopping.cart.repository.ReviewRepository;
 import com.stripe.Stripe;
 import com.stripe.model.Price;
 import com.stripe.param.PriceCreateParams;
@@ -18,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -26,15 +29,18 @@ import java.util.UUID;
 public class ProductService implements IProductService {
     private final ProductRepository productRepository;
     private final CloudinaryImageService cloudinaryImageService;
+    private final ReviewRepository reviewRepository;
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
 
     public ProductService(
             ProductRepository productRepository,
-            CloudinaryImageService cloudinaryImageService) {
+            CloudinaryImageService cloudinaryImageService,
+            ReviewRepository reviewRepository) {
         this.productRepository = productRepository;
         this.cloudinaryImageService = cloudinaryImageService;
+        this.reviewRepository = reviewRepository;
     }
 
     // Initialize Stripe with the API key from application.properties
@@ -46,13 +52,42 @@ public class ProductService implements IProductService {
     @Override
     @Transactional(readOnly = true)
     public List<Product> getAllProducts() {
-        return productRepository.findByIsDeletedFalseWithImages();
+        List<Product> products = productRepository.findByIsDeletedFalseWithImages();
+        attachReviewStats(products);
+        return products;
     }
 
     @Override
     @Transactional(readOnly = true)
     public Product getProductById(UUID id) {
-        return productRepository.findActiveByIdWithImages(Objects.requireNonNull(id)).orElse(null);
+        Product product = productRepository.findActiveByIdWithImages(Objects.requireNonNull(id)).orElse(null);
+        if (product != null) {
+            attachReviewStats(List.of(product));
+        }
+        return product;
+    }
+
+    private void attachReviewStats(List<Product> products) {
+        if (products == null || products.isEmpty()) {
+            return;
+        }
+        Map<UUID, double[]> stats = new HashMap<>();
+        for (Object[] row : reviewRepository.averageRatingByProduct()) {
+            UUID productId = (UUID) row[0];
+            double avg = row[1] instanceof Number n ? n.doubleValue() : 0;
+            long count = row[2] instanceof Number n ? n.longValue() : 0L;
+            stats.put(productId, new double[]{avg, count});
+        }
+        for (Product product : products) {
+            double[] s = stats.get(product.getId());
+            if (s != null) {
+                product.setAverageRating(Math.round(s[0] * 10.0) / 10.0);
+                product.setReviewCount((long) s[1]);
+            } else {
+                product.setAverageRating(null);
+                product.setReviewCount(0L);
+            }
+        }
     }
 
     @Override

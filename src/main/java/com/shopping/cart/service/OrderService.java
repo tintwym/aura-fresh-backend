@@ -27,10 +27,15 @@ public class OrderService implements IOrderService {
 
     private final OrderRepository orderRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
-    public OrderService(OrderRepository orderRepository, UserService userService) {
+    public OrderService(
+            OrderRepository orderRepository,
+            UserService userService,
+            NotificationService notificationService) {
         this.orderRepository = orderRepository;
         this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -65,7 +70,10 @@ public class OrderService implements IOrderService {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+        String previous = order.getStatus();
         order.setStatus(normalized);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        notificationService.notifyOrderStatus(saved, previous, normalized);
+        return saved;
     }
 }

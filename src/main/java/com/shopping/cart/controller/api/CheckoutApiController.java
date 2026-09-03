@@ -22,8 +22,10 @@ public class CheckoutApiController {
     }
 
     @PostMapping("/checkout")
-    public Map<String, String> checkout(@RequestHeader("Authorization") String token) {
-        CheckoutSessionResponse session = checkoutService.checkout(token);
+    public Map<String, String> checkout(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(value = "zone", required = false) String zone) {
+        CheckoutSessionResponse session = checkoutService.checkout(token, zone);
         Map<String, String> body = new HashMap<>();
         body.put("sessionId", session.getSessionId());
         body.put("checkoutUrl", session.getCheckoutUrl());

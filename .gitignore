@@ -38,9 +38,8 @@ build/
 ### Local overrides (optional secrets) ###
 src/main/resources/application-local.properties
 
-### Images (seed samples are committed; runtime uploads stay local) ###
-src/main/resources/static/images/products/*
-!src/main/resources/static/images/products/seed-*
+### Runtime product image uploads (optional local folder) ###
+src/main/resources/static/images/products/
 
 ### Node (removed — was Tailwind for admin UI) ###
 node_modules/

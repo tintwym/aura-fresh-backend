@@ -160,7 +160,7 @@ public class CheckoutService implements ICheckoutService {
                     ? frontendBaseUrl.substring(0, frontendBaseUrl.length() - 1)
                     : frontendBaseUrl;
             successUrl = base + "/payment/success?session_id={CHECKOUT_SESSION_ID}";
-            cancelUrl = base + "/cart";
+            cancelUrl = base + "/payment/cancelled";
         }
 
         try {

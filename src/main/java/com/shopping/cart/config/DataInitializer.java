@@ -384,14 +384,10 @@ public class DataInitializer implements ApplicationRunner {
         }
         ProductImage first = images.get(0);
         String path = first.getPath();
+        // Always keep seed Unsplash URLs in sync on API restart
         if (path == null || path.isBlank() || needsImageRefresh(path) || !imageUrl.equals(path)) {
-            // Keep grocery Unsplash URLs in sync for polished demos
-            if (path == null || path.isBlank() || needsImageRefresh(path)
-                    || path.contains("dummyimage.com")
-                    || !path.contains("unsplash.com")) {
-                first.setPath(imageUrl);
-                first.setAltText(product.getName());
-            }
+            first.setPath(imageUrl);
+            first.setAltText(product.getName());
         }
     }
 

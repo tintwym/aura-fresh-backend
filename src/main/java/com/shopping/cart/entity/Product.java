@@ -21,7 +21,7 @@ public class Product extends BaseEntity {
     private BigDecimal price;
     private int stock;
 
-    /** Customer-facing grocery aisle (e.g. Meat, Dairy, Produce, Pantry). */
+    /** Customer-facing supermarket aisle (e.g. Fresh Fruit, Seafood, Dairy & Eggs). */
     @Column(length = 64)
     private String category;
 

@@ -186,37 +186,55 @@ public class ProductService implements IProductService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    /** Meat and dairy must carry an expiry date for the customer app. */
+    /** Fresh protein and dairy aisles must carry an expiry date for the customer app. */
     private static void validateFreshnessFields(Product product) {
         if (!requiresExpiry(product)) {
             return;
         }
         if (product.getExpiryDate() == null) {
-            throw new IllegalArgumentException("Meat and dairy products require an expiry date");
+            throw new IllegalArgumentException(
+                    "Fresh meat, seafood, poultry, and dairy products require an expiry date");
         }
     }
 
     private static boolean requiresExpiry(Product product) {
         String category = product.getCategory() == null ? "" : product.getCategory().toLowerCase();
+        if (category.contains("poultry")
+                || category.contains("seafood")
+                || category.contains("fresh meat")
+                || "meat".equals(category)
+                || (category.contains("meat") && !category.contains("plant"))
+                || category.contains("dairy")
+                || category.contains("eggs")) {
+            return true;
+        }
+
+        // Skip sauces/oils/bakery snacks so "fish sauce" / "butter cookies" are not forced expiry
+        if (category.contains("sauce")
+                || category.contains("condiment")
+                || category.contains("oil")
+                || category.contains("bakery")
+                || category.contains("snack")
+                || category.contains("biscuit")) {
+            return false;
+        }
+
         String haystack = (
                 (product.getName() == null ? "" : product.getName()) + " " +
-                (product.getDescription() == null ? "" : product.getDescription()) + " " +
-                category
+                (product.getDescription() == null ? "" : product.getDescription())
         ).toLowerCase();
-        return category.contains("meat")
-                || category.contains("dairy")
-                || haystack.contains("chicken")
+        return haystack.contains("chicken")
                 || haystack.contains("beef")
                 || haystack.contains("pork")
                 || haystack.contains("mutton")
-                || haystack.contains("fish")
+                || haystack.contains("prawn")
+                || haystack.contains("shrimp")
+                || haystack.matches(".*\\bfish\\b.*")
                 || haystack.contains("seafood")
-                || haystack.contains(" milk")
-                || haystack.startsWith("milk")
+                || haystack.matches(".*\\bmilk\\b.*")
                 || haystack.contains("cheese")
                 || haystack.contains("yogurt")
-                || haystack.contains("butter")
-                || haystack.contains("cream");
+                || haystack.contains("yoghurt");
     }
 
     @Override

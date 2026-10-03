@@ -157,7 +157,7 @@ public class RecipeSuggestionService {
         return cleaned.isEmpty() || cleaned.length() > 80 ? null : cleaned;
     }
 
-    private static ShopProduct toShopProduct(Product p) {
+    static ShopProduct toShopProduct(Product p) {
         String image = p.getImages() == null ? null : p.getImages().stream()
                 .map(img -> img.getPath())
                 .filter(path -> path != null && !path.isBlank())
@@ -166,7 +166,7 @@ public class RecipeSuggestionService {
         return new ShopProduct(p.getId(), p.getName(), p.getPrice(), p.getStock(), p.getCategory(), image);
     }
 
-    private static String key(String name) {
+    static String key(String name) {
         return name.trim().toLowerCase(Locale.ROOT);
     }
 
